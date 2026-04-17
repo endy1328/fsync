@@ -4,10 +4,13 @@
 max_workers = 8
 # Python 표준 로그 레벨
 log_level = "INFO"
+# bidirectional state 기본 저장 경로
+state_dir = ".fsync-state"
 
 # 예시: source 하나를 여러 target으로 동기화
 [[jobs]]
-name = "sample-job"
+name = "sample-one-way"
+mode = "one_way"
 source = "/absolute/path/to/source"
 targets = [
   "/absolute/path/to/target-a",
@@ -19,12 +22,15 @@ interval_seconds = 60
 # true이면 source에서 삭제된 파일도 모든 target에서 제거
 copy_deleted = false
 
-# 예시: 첫 번째 job과 병렬로 동작하는 두 번째 독립 job
+# 예시: 두 peer 사이의 양방향 동기화
 [[jobs]]
-name = "media-backup"
-source = "/absolute/path/to/media"
-targets = [
-  "/absolute/path/to/media-backup",
-]
-interval_seconds = 300
-copy_deleted = false
+name = "sample-bidirectional"
+mode = "bidirectional"
+left = "/absolute/path/to/left"
+right = "/absolute/path/to/right"
+interval_seconds = 60
+delete_policy = "tracked"
+conflict_policy = "keep_both"
+initial_sync = "manual"
+# 개별 state 파일을 직접 지정하려면 사용
+# state_file = "/absolute/path/to/state/sample-bidirectional.json"

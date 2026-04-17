@@ -5,17 +5,23 @@ from dataclasses import dataclass, field
 import logging
 import threading
 import time
+from typing import Protocol
 
-from fsync.config import AppConfig, JobConfig
+from fsync.bidir import BidirectionalSyncEngine
+from fsync.config import AppConfig, BidirectionalJobConfig, JobConfig
 from fsync.syncer import SyncEngine
 
 
 logger = logging.getLogger("fsync.scheduler")
 
 
+class JobRunner(Protocol):
+    def sync_job(self, job: JobConfig | BidirectionalJobConfig) -> object: ...
+
+
 @dataclass(slots=True)
 class JobState:
-    config: JobConfig
+    config: JobConfig | BidirectionalJobConfig
     next_run_at: float = 0.0
     running: bool = False
     last_future: Future | None = None
@@ -26,14 +32,16 @@ class Scheduler:
     def __init__(self, config: AppConfig) -> None:
         self.config = config
         self.executor = ThreadPoolExecutor(max_workers=config.max_workers, thread_name_prefix="fsync")
-        self.engine = SyncEngine()
+        self.one_way_engine = SyncEngine()
+        self.bidirectional_engine = BidirectionalSyncEngine()
+        self.engine = self.one_way_engine
         self.states = [JobState(config=job) for job in config.jobs]
         now = time.monotonic()
         for state in self.states:
             state.next_run_at = now
 
     def run_once(self) -> None:
-        futures = [self.executor.submit(self.engine.sync_job, state.config) for state in self.states]
+        futures = [self.executor.submit(self._sync_state_job, state) for state in self.states]
         errors: list[Exception] = []
         try:
             for future in futures:
@@ -65,7 +73,7 @@ class Scheduler:
                 return
 
             state.running = True
-            future = self.executor.submit(self.engine.sync_job, state.config)
+            future = self.executor.submit(self._sync_state_job, state)
             state.last_future = future
             future.add_done_callback(lambda fut, job_state=state: self._complete(job_state, fut))
 
@@ -78,3 +86,12 @@ class Scheduler:
             with state.lock:
                 state.running = False
                 state.next_run_at = time.monotonic() + state.config.interval_seconds
+
+    def _sync_state_job(self, state: JobState) -> object:
+        engine = self._select_engine(state.config)
+        return engine.sync_job(state.config)
+
+    def _select_engine(self, job: JobConfig | BidirectionalJobConfig) -> SyncEngine | BidirectionalSyncEngine:
+        if isinstance(job, BidirectionalJobConfig):
+            return self.bidirectional_engine
+        return self.one_way_engine
