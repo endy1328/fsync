@@ -33,8 +33,6 @@ htmlcov/
 config.toml
 *.log
 .codex
-agent.md
-agent-docs/
 
 # Editor and OS files
 .idea/
