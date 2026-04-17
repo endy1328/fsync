@@ -8,8 +8,8 @@
 - `agent.md`, workflow, plan, status, verification 문서를 중심으로 첫 문서 기준선을 정리했습니다.
 - 문서 기준선이 검증되기 전까지 추가 구현을 보류했습니다.
 - 검증 피드백을 반영해 현재 단계 명칭을 `documentation-first`로 통일했습니다.
-- `src/fsync/*`, `tests/*`의 기존 초안 구현을 폐기하지 않고 v1 베이스라인으로 재사용했습니다.
-- `TOML [[jobs]]`, polling-only 스케줄링, job 단위 병렬 sync 기준으로 v1 동작을 정리했습니다.
+- `src/fsync/*`, `tests/*`의 기존 초안 구현을 폐기하지 않고 1.0 베이스라인으로 재사용했습니다.
+- `TOML [[jobs]]`, polling-only 스케줄링, job 단위 병렬 sync 기준으로 1.0 동작을 정리했습니다.
 - busy source 파일이 현재 주기에서 보류되고 다음 주기에 재시도되도록 구현했습니다.
 - `copy_deleted`를 job 단위 옵션으로 유지하고 기본값을 `false`로 두었습니다.
 - 성공적으로 동기화된 파일만 snapshot에 반영되도록 정책을 수정했습니다.
@@ -19,4 +19,4 @@
 - target metadata 실패 처리와 one-shot 다중 job 실패 격리 테스트를 추가했습니다.
 - 변경 여부 판정을 메모리 snapshot 기준에서 실제 target 파일 상태 비교 기준으로 변경했습니다.
 - 재시작 후 재복사 방지와 일부 target만 누락된 경우의 부분 복구 테스트를 추가했습니다.
-- README와 운영 문서를 현재 v1 구현 상태에 맞게 갱신했습니다.
+- README와 운영 문서를 현재 1.0 구현 상태에 맞게 갱신했습니다.
